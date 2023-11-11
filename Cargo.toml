@@ -5,4 +5,4 @@ edition = "2021"
 
 [dependencies]
 hex = "0.4.3"
-orion = "0.17.6"
+ring = "0.17.5"

@@ -1,22 +1,17 @@
-use orion::aead::{self, SecretKey};
+use ring::rand::{SecureRandom, SystemRandom};
 
-pub fn encrypt(plaintext: &str) -> (String, String) {
-    let secret_key = aead::SecretKey::default();
-    let cipher = aead::seal(&secret_key, plaintext.as_bytes()).unwrap();
+pub fn get_env_or_random(name: &str) -> String {
+    std::env::var(name).unwrap_or_else(|_| {
+        // Fill an array with random bytes
+        let mut buf = [0u8; 12];
+        SystemRandom::new().fill(&mut buf).unwrap();
 
-    let ciphertext = hex::encode(cipher);
-    let key = hex::encode(secret_key.unprotected_as_bytes());
-
-    (ciphertext, key)
-}
-
-pub fn decrypt(ciphertext: String, key: String) -> String {
-    let decoded_key = hex::decode(key);
-    let cipher = hex::decode(ciphertext).unwrap();
-
-    let secret_key = SecretKey::from_slice(decoded_key.unwrap().as_slice()).unwrap();
-    let plaintext_bytes = aead::open(&secret_key, cipher.as_slice()).unwrap();
-
-    let plaintext = String::from_utf8(plaintext_bytes).unwrap();
-    return plaintext;
+        // hex encode the value so it can be represented as a string
+        let encoded = hex::encode(&buf);
+        eprintln!(
+            "{} env var is not set. Using a random default value: {}",
+            name, encoded
+        );
+        encoded
+    })
 }
